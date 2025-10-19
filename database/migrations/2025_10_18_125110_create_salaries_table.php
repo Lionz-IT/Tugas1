@@ -13,19 +13,20 @@ return new class extends Migration
     {
         Schema::create('salaries', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('karyawan_id');          
-            $table->string('bulan', 10);          
-            $table->decimal('gaji_pokok', 10, 2);         
-            $table->decimal('tunjangan', 10, 2)->default(0);          
-            $table->decimal('potongan', 10, 2)->default(0);          
-            $table->decimal('total_gaji', 10, 2);          
-            $table->timestamps();                  
             
-            // Relasi ke tabel employees         
-            $table->foreign('karyawan_id')                
-                    ->references('id')                 
-                    ->on('employees') 
-                    ->onDelete('cascade');
+            // Foreign key ke tabel 'employees' (gunakan 'employee_id')
+            $table->foreignId('employee_id')
+                  ->constrained('employees')
+                  ->onDelete('cascade'); 
+
+            // Kolom untuk detail gaji (sesuai rencana)
+            $table->date('payment_date'); // Tanggal gaji ini dibayarkan
+            $table->decimal('base_salary', 10, 2); // Gaji pokok saat itu
+            $table->decimal('bonus', 10, 2)->default(0); // Bonus
+            $table->decimal('deductions', 10, 2)->default(0); // Potongan
+            $table->decimal('net_pay', 10, 2); // Total gaji bersih
+
+            $table->timestamps();
         });
     }
 

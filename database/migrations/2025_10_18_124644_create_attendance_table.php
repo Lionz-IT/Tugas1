@@ -11,20 +11,22 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('attendance', function (Blueprint $table) {
+        // Ganti nama tabel menjadi plural: 'attendances'
+        Schema::create('attendances', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('karyawan_id');       
-            $table->date('tanggal');         
-            $table->time('waktu_masuk')->nullable();         
-            $table->time('waktu_keluar')->nullable();         
-            $table->enum('status_absensi', ['hadir', 'izin', 'sakit', 'alpha']);         
-            $table->timestamps();          
 
-            // Foreign key constraint         
-            $table->foreign('karyawan_id')                 
-                    ->references('id')                 
-                    ->on('employees')                 
-                    ->onDelete('cascade'); 
+            // Gunakan foreignId() dan nama kolom 'employee_id'
+            $table->foreignId('employee_id')
+                  ->constrained('employees')
+                  ->onDelete('cascade');
+
+            // Gunakan nama kolom bahasa Inggris
+            $table->date('date');
+            $table->time('check_in');
+            $table->time('check_out')->nullable();
+            $table->string('status')->default('Hadir'); // Gunakan string
+
+            $table->timestamps();
         });
     }
 
@@ -33,6 +35,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('attendance');
+        // Ganti nama tabel menjadi plural: 'attendances'
+        Schema::dropIfExists('attendances');
     }
 };

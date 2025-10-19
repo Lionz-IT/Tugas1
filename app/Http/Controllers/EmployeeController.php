@@ -3,98 +3,80 @@
 namespace App\Http\Controllers;
 
 use App\Models\Employee;
+use App\Models\Department;
+use App\Models\Position;   
 use Illuminate\Http\Request;
 
 class EmployeeController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        $employees = Employee::latest()->paginate(5);
-
+        $employees = Employee::with(['department', 'position'])->latest()->paginate(10);
+        
         return view('employees.index', compact('employees'));
     }
-
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        return view('employees.create');
+        $departments = Department::orderBy('nama_departemen')->get();
+        $positions = Position::orderBy('nama_jabatan')->get();
+        
+        return view('employees.create', compact('departments', 'positions'));
     }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         $request->validate([
-            'nama_lengkap' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'nomor_telepon' => 'required|string|max:20',
-            'tanggal_lahir' => 'required|date',
-            'alamat' => 'required|string|max:255',
-            'tanggal_masuk' => 'required|date',
-            'status' => 'required|string|max:50',
+            'nama_karyawan' => 'required|string|max:100',
+            'email' => 'required|email|unique:employees,email',
+            'nomor_telepon' => 'nullable|string|max:15',
+            'tanggal_lahir' => 'nullable|date',        
+            'alamat' => 'nullable|string',             
+            'tanggal_masuk' => 'required|date',         
+            'status' => 'required|in:aktif,nonaktif',
+            'department_id' => 'required|exists:departments,id', 
+            'position_id' => 'required|exists:positions,id',   
         ]);
-        Employee::create($request->all());
-        return redirect()->route('employees.index');
+
+        Employee::create($request->all()); 
+
+        return redirect()->route('employees.index')
+                         ->with('success', 'Karyawan baru berhasil ditambahkan.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function show(Employee $employee) // Menggunakan Route Model Binding
     {
-        $employee = Employee::find($id);
         return view('employees.show', compact('employee'));
     }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    public function edit(Employee $employee) // Menggunakan Route Model Binding
     {
-        $employee = Employee::find($id);
-        return view('employees.edit',compact('employee'));
-    }
+        $departments = Department::orderBy('nama_departemen')->get();
+        $positions = Position::orderBy('nama_jabatan')->get();
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+        return view('employees.edit', compact('employee', 'departments', 'positions'));
+    }
+    public function update(Request $request, Employee $employee)
     {
         $request->validate([
-            'nama_lengkap' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'nomor_telepon' => 'required|string|max:20',
-            'tanggal_lahir' => 'required|date',
-            'alamat' => 'required|string|max:255',
+            'nama_karyawan' => 'required|string|max:100',
+            'email' => 'required|email|unique:employees,email,' . $employee->id, 
+            'nomor_telepon' => 'nullable|string|max:15',
+            'tanggal_lahir' => 'nullable|date',
+            'alamat' => 'nullable|string',
             'tanggal_masuk' => 'required|date',
-            'status' => 'required|string|max:50',
+            'status' => 'required|in:aktif,nonaktif',
+            'department_id' => 'required|exists:departments,id',
+            'position_id' => 'required|exists:positions,id',
         ]);
-        $employee = Employee::findOrFail($id);
-        $employee->update($request->only([
-            'nama_lengkap',
-            'email',
-            'nomor_telepon',
-            'tanggal_lahir',
-            'alamat',
-            'tanggal_masuk',
-            'status',
-        ]));
-        return redirect()->route('employees.index');
-    }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
+        $employee->update($request->all());
+
+        return redirect()->route('employees.index')
+                         ->with('success', 'Data karyawan berhasil diperbarui.');
+    }
+    public function destroy(Employee $employee) // Menggunakan Route Model Binding
     {
-        $employee = Employee::find($id);
         $employee->delete();
-        return redirect()->route('employees.index');
+        
+        return redirect()->route('employees.index')
+                         ->with('success', 'Data karyawan berhasil dihapus.');
     }
 }
